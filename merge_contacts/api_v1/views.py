@@ -17,7 +17,6 @@ fh_tasks_access.setFormatter(formatter_tasks_access)
 logger.addHandler(fh_tasks_access)
 
 
-
 # Обработчик установки приложения
 class InstallAppApiView(views.APIView):
     @xframe_options_exempt
@@ -60,8 +59,8 @@ class DealCreateUpdateViewSet(views.APIView):
         id_deal = request.data.get("data[FIELDS][ID]", None)
         application_token = request.data.get("auth[application_token]", None)
 
-        # if not verification_app.verification(application_token):
-        #     return Response("Unverified event source", status=status.HTTP_400_BAD_REQUEST)
+        if bx24_tokens.get_secret_bx24("application_token") != application_token:
+            return Response("Unverified event source", status=status.HTTP_400_BAD_REQUEST)
 
         if not id_deal:
             return Response("Not transferred ID deal", status=status.HTTP_400_BAD_REQUEST)

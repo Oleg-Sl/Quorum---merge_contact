@@ -2,9 +2,20 @@ from django.shortcuts import render
 from django.views.decorators.clickjacking import xframe_options_exempt
 from rest_framework import views, viewsets, filters, status
 from rest_framework.response import Response
+import logging
 
 
 from .service import handler, bx24_tokens
+
+
+# логгер входные данные событий от Битрикс
+logger = logging.getLogger('tasks_access')
+logger.setLevel(logging.INFO)
+fh_tasks_access = logging.handlers.TimedRotatingFileHandler('access.log', when='D', interval=1)
+formatter_tasks_access = logging.Formatter('[%(asctime)s] %(levelname).1s %(message)s')
+fh_tasks_access.setFormatter(formatter_tasks_access)
+logger.addHandler(fh_tasks_access)
+
 
 
 # Обработчик установки приложения
@@ -44,6 +55,7 @@ class IndexApiView(views.APIView):
 class DealCreateUpdateViewSet(views.APIView):
     """ Контроллер обработки событий BX24: onVoximplantCallEnd """
     def post(self, request):
+        logger.info(request)
         event = request.data.get("event", "")
         id_deal = request.data.get("data[FIELDS][ID]", None)
         application_token = request.data.get("auth[application_token]", None)

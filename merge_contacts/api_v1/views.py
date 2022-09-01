@@ -54,7 +54,7 @@ class IndexApiView(views.APIView):
 class DealCreateUpdateViewSet(views.APIView):
     """ Контроллер обработки событий BX24: onVoximplantCallEnd """
     def post(self, request):
-        logger.info(request)
+        logger.info(request.data)
         event = request.data.get("event", "")
         id_deal = request.data.get("data[FIELDS][ID]", None)
         application_token = request.data.get("auth[application_token]", None)

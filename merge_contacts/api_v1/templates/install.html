@@ -11,9 +11,9 @@
 		<p>INSTALL.html</p>
 		<!--		<script src="{% static 'scripts/install/script.js' %}"></script>-->
 		<script>
-			let DOMAIN = "https://atonapplication.xyz/dpk/api/v1";
-			let URL__CREATE_DEAL = "";
-			let URL__UPDATE_DEAL = "";
+			let DOMAIN = "https://atonapplication.xyz/merge_contacts/api/v1";
+			let URL__CREATE_DEAL = `${DOMAIN}/create-deal/`;
+			let URL__UPDATE_DEAL = `${DOMAIN}/create-deal/`;
 
 			async function callMethod(method, params = {}) {
 				return new Promise((resolve, reject) => {

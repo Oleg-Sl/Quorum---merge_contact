@@ -47,7 +47,27 @@
 				)
 			}
 
+			async function removeHandler() {
+				await callMethod(
+					'event.unbind',
+					{
+						"event": "ONCRMDEALADD",
+						"handler": URL__CREATE_DEAL,
+					},
+					console.log('Обработчик ONCRMDEALADD удален')
+				)
+				await callMethod(
+					'event.unbind',
+					{
+						"event": "ONCRMDEALUPDATE",
+						"handler": URL__UPDATE_DEAL,
+					},
+					console.log('Обработчик ONCRMDEALUPDATE удален')
+				)
+			}
+
 			BX24.init(async function(){
+				await removeHandler();
 				await addHandler();
 				BX24.installFinish();
 			});

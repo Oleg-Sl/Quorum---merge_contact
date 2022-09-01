@@ -4,7 +4,7 @@ from rest_framework import views, viewsets, filters, status
 from rest_framework.response import Response
 
 
-from .service import handler
+from .service import handler, bx24_tokens
 
 
 # Обработчик установки приложения
@@ -12,14 +12,14 @@ class InstallAppApiView(views.APIView):
     @xframe_options_exempt
     def post(self, request):
         data = {
-            "domain": request.query_params.get("DOMAIN", "bits24.bitrix24.ru"),
+            "domain": request.query_params.get("DOMAIN", ""),
             "auth_token": request.data.get("AUTH_ID", ""),
             "expires_in": request.data.get("AUTH_EXPIRES", 3600),
             "refresh_token": request.data.get("REFRESH_ID", ""),
             "application_token": request.query_params.get("APP_SID", ""),
-            'client_endpoint': f'https://{request.query_params.get("DOMAIN", "bits24.bitrix24.ru")}/rest/',
+            'client_endpoint': f'https://{request.query_params.get("DOMAIN", "")}/rest/',
         }
-        # tokens.save_secrets(request.data)
+        bx24_tokens.save_secrets(request.data)
         return render(request, 'install.html')
 
 

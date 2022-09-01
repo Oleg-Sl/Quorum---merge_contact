@@ -19,7 +19,7 @@ class InstallAppApiView(views.APIView):
             "application_token": request.query_params.get("APP_SID", ""),
             'client_endpoint': f'https://{request.query_params.get("DOMAIN", "")}/rest/',
         }
-        bx24_tokens.save_secrets(request.data)
+        bx24_tokens.create_secrets_bx24(data)
         return render(request, 'install.html')
 
 

@@ -22,13 +22,13 @@ def get_duplicates_by_email_and_name_contact():
         )
     ).values('res').annotate(tt=models.Count('res')).filter(tt__gte=2).values_list('res', flat=True)
 
-    duplicates_ids = Contacts.objects.annotate(
-        res=models.functions.Concat(
-            *DUPLICATES_FIELDS['email_contact_name'],
-            # 'EMAIL__VALUE_TYPE', 'NAME',
-            output_field=models.CharField()
-        )
-    ).filter(res__in=duplicates).values_list('ID', flat=True)
+    # duplicates_ids = Contacts.objects.annotate(
+    #     res=models.functions.Concat(
+    #         *DUPLICATES_FIELDS['email_contact_name'],
+    #         # 'EMAIL__VALUE_TYPE', 'NAME',
+    #         output_field=models.CharField()
+    #     )
+    # ).filter(res__in=duplicates).values_list('ID', flat=True)
     # pprint(duplicates_ids)
     return duplicates
 
@@ -44,13 +44,13 @@ def get_duplicates_by_email_and_company():
         # filter=models.Q(companies__isnull=False)
     ).values('res').annotate(tt=models.Count('res')).filter(tt__gte=2).values_list('res', flat=True)
 
-    duplicates_ids = Contacts.objects.filter(companies__isnull=False).annotate(
-        res=models.functions.Concat(
-            *DUPLICATES_FIELDS['email_company'],
-            # 'EMAIL__VALUE_TYPE', 'companies__TITLE',
-            output_field=models.CharField()
-        )
-    ).filter(res__in=duplicates).values_list('ID', flat=True)
+    # duplicates_ids = Contacts.objects.filter(companies__isnull=False).annotate(
+    #     res=models.functions.Concat(
+    #         *DUPLICATES_FIELDS['email_company'],
+    #         # 'EMAIL__VALUE_TYPE', 'companies__TITLE',
+    #         output_field=models.CharField()
+    #     )
+    # ).filter(res__in=duplicates).values_list('ID', flat=True)
 
     return duplicates
 

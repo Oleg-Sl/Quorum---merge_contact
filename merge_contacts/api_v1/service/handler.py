@@ -88,14 +88,15 @@ def merge_contacts(ids, lock):
     if 'result' not in response_contacts or 'result' not in response_contacts['result']:
         return
 
-    data_update = forming_data_update(response_contacts['result']['result'])
+    contacts_update = FieldsContactsUpdate(bx24, response_contacts['result']['result'])
+    data_update = forming_data_update(response_contacts['result']['result'], contacts_update)
     id_contact_last = get_id_max_date(response_contacts['result']['result'])
-    lock.acquire()
+    companies = contacts_update.get_field_company_non_empty()
 
-    report.add_row(json.dumps(data_update))
-    report.add_row(json.dumps(data_update))
+    lock.acquire()
     report.add_row(json.dumps(data_update))
     lock.release()
+
     # pprint(data_update)
     response_update = bx24.call(
         'crm.contact.update',
@@ -108,8 +109,17 @@ def merge_contacts(ids, lock):
         }
     )
 
-    # pprint(f"{id_contact_last=}")
-    # print("99"*8)
+    if not companies:
+        return
+
+    response_companies_set = bx24.call(
+        'crm.contact.company.items.set',
+        {
+            'id': id_contact_last,
+            'items': [{'COMPANY_ID': company_id} for company_id in companies]
+        }
+    )
+
     if response_update.get('result'):
         for id_contact in ids:
             if int(id_contact) in [id_contact_last, int(id_contact_last)]:
@@ -118,12 +128,11 @@ def merge_contacts(ids, lock):
                 'crm.contact.delete',
                 {'id': id_contact}
             )
-            # pprint(res_del)
 
 
 # формирование данных для обновления самого свежего контакта - объединение полей по требуемой логике
-def forming_data_update(contacts):
-    contacts_update = FieldsContactsUpdate(bx24, contacts)
+def forming_data_update(contacts, contacts_update):
+    # contacts_update = FieldsContactsUpdate(bx24, contacts)
     data = {}
     fields = get_fields_contact()
 
@@ -229,9 +238,25 @@ def add_company_in_deal(id_deal):
     return 200, 'Ok'
 
 
-# Класс-примесь - обработки поля по правилу: объединение через ";" от нового к старому
+# Класс-примесь - обработки поля компании по правилу: первое не пустое значение от нового к старому
+class FieldsContactsCompanyNonEmptyAscDate:
+    def get_field_company_non_empty(self):
+        companies = Companies.objects.filter(contacts=self.ids_sort_date[-1]).values_list("ID", flat=True)
+        if companies:
+            return
+        for id_contact in self.ids_sort_date[::-1]:
+            companies = Companies.objects.filter(contacts=id_contact).values_list("ID", flat=True)
+            if companies:
+                return list(companies)
+
+
+# Класс-примесь - обработки поля по правилу: первое не пустое значение от нового к старому
 class FieldsContactsFirstNonEmptyAscDate:
     def get_field_non_empty(self, field):
+        # print("FIELD >>> ", field)
+        # for id_contact in self.ids_sort_date[::-1]:
+        #     print("===== >>> ", self.contacts[id_contact].get(field))
+
         if self.contacts[self.ids_sort_date[0]].get(field):
             return
 
@@ -361,7 +386,8 @@ class FieldsContactsUpdate(FieldsContactsRuleConcatDescDate,
                            FieldsContactsRuleMaxLength,
                            FieldsContactsTypeCrmMultifield,
                            FieldsContactsTypeFile,
-                           FieldsContactsFirstNonEmptyAscDate):
+                           FieldsContactsFirstNonEmptyAscDate,
+                           FieldsContactsCompanyNonEmptyAscDate):
     def __init__(self, bx24, contacts):
         self.bx24 = bx24
         self.contacts = contacts

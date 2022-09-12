@@ -34,6 +34,7 @@ def merge_contacts(method_merge):
     global companies_queue
     global company_contact_queue
     global duplicates_queue
+
     # Очереди
     contacts_queue = QueueCommands('crm.contact.list', bx24, COUNT_THREAD)
     companies_queue = QueueCommands('crm.company.list', bx24, COUNT_THREAD)

@@ -108,19 +108,19 @@ def merge_contacts(ids, lock):
         }
     )
 
-    pprint(f"{id_contact_last=}")
+    # pprint(f"{id_contact_last=}")
     # print("99"*8)
-    if response_update.get('result'):
-        # print("99"*8)
-        for id_contact in ids:
-            if int(id_contact) in [id_contact_last, int(id_contact_last)]:
-                continue
-            # print(f"{id_contact=}")
-            res_del = bx24.call(
-                'crm.contact.delete',
-                {'id': id_contact}
-            )
-            pprint(res_del)
+    # if response_update.get('result'):
+    #     # print("99"*8)
+    #     for id_contact in ids:
+    #         if int(id_contact) in [id_contact_last, int(id_contact_last)]:
+    #             continue
+    #         # print(f"{id_contact=}")
+    #         res_del = bx24.call(
+    #             'crm.contact.delete',
+    #             {'id': id_contact}
+    #         )
+    #         pprint(res_del)
 
 
 # формирование данных для обновления самого свежего контакта - объединение полей по требуемой логике

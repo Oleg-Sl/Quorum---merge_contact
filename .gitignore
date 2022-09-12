@@ -96,3 +96,8 @@ db.sqlite3
 # json
 .json
 *.json
+
+reports/*
+access.log*
+migrations/*
+files/*

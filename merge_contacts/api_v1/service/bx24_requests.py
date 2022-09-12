@@ -1,6 +1,11 @@
 import json
+import os
 import time
-from requests import adapters, post, exceptions
+import re
+from requests import adapters, post, exceptions, get as http_get
+from urllib.parse import unquote
+from mimetypes import guess_extension as extension
+from django.conf import settings
 
 from .bx24_tokens import (update_secrets_bx24, get_secrets_all_bx24, get_secret_bx24)
 from .variables import BX24__COUNT_METHODS_IN_BATH, BX24__COUNT_RECORDS_IN_METHODS, COUNT_THREAD
@@ -89,10 +94,12 @@ class Bitrix24:
 
     # формирование команд для batch запросов
     @staticmethod
-    def forming_long_batch_commands(method, total_contacts):
+    def forming_long_batch_commands(method, total_contacts, fields=[]):
         cmd = {}
         for i in range(0, total_contacts, BX24__COUNT_RECORDS_IN_METHODS):
             cmd[f'key_{i}'] = f'{method}?start={i}'
+            for field in fields:
+                cmd[f'key_{i}'] += f'&select[]={field}'
 
         return cmd
 
@@ -108,6 +115,9 @@ class Bitrix24:
                 cmd_list.append(cmd)
                 count = 0
                 cmd = {}
+
+        if cmd:
+            cmd_list.append(cmd)
 
         return cmd_list
 
@@ -136,4 +146,48 @@ class Bitrix24:
             result_batch.extend(self.merge_long_batch_result(cmd.keys(), response['result']['result']))
 
         return result_batch
+
+    def download_file(self, url_path, fileid, recursion=5):
+        recursion -= 1
+        try:
+            url = f'https://{self.domain}{url_path}'
+            params = {
+                'auth': self.auth_token
+            }
+
+            result = http_get(url, params)
+
+        except exceptions.ReadTimeout:
+            result = dict(error=f'Timeout waiting expired [{str(self.timeout)} sec]')
+        except exceptions.ConnectionError:
+            result = dict(error=f'Max retries exceeded [{str(adapters.DEFAULT_RETRIES)}]')
+
+        if 'error' in result or 'X-Bitrix-Ajax-Status' in result.headers:
+            result_update_token = self.refresh_tokens()
+            if result_update_token is not True:
+                return
+            if recursion > 0:
+                return self.download_file(url_path, fileid, recursion)
+        else:
+            f_name = self.get_filename(result.headers, fileid)
+            f_path = os.path.join(settings.BASE_DIR, 'files', f_name)
+            with open(f_path, 'wb') as f:
+                f.write(result.content)
+
+            return f_path
+
+    def get_filename(self, headers, fileid):
+        data = headers.get('Content-Disposition')
+
+        if data:
+            filename = re.search(r'filename="(.+)";', data).group(1)
+            return unquote(filename)
+        else:
+            content_type = headers.get("Content-Type")
+
+            if content_type and extension(content_type):
+                filename = fileid + extension(content_type)
+                return unquote(filename)
+            else:
+                return unquote(fileid)
 

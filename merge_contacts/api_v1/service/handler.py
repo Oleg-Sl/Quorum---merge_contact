@@ -110,18 +110,20 @@ def merge_contacts(ids, lock, report):
             if field_content:
                 data[field] = field_content
 
-    # добавление данных в отчет
-    lock.acquire()
-    report.add_fields(fields)
-    report.add(contacts, id_contact_last, data)
-    lock.release()
-
     # обновление контакта
     res_update_contact = update_data_contacts(id_contact_last, data)
     # добавление компаний к контакту
     res_add_companies = add_companies_to_contact(id_contact_last, companies)
 
+    # print('res_update_contact = ', res_update_contact)
+    # print('res_add_companies =  ', res_add_companies)
     if res_update_contact and res_add_companies:
+        # добавление данных в отчет
+        lock.acquire()
+        report.add_fields(fields)
+        report.add(contacts, id_contact_last, data, companies)
+        lock.release()
+
         del_companies_to_contact(ids, id_contact_last)
 
 
@@ -131,14 +133,15 @@ def del_companies_to_contact(ids_contacts, id_contact_last):
         if int(id_contact) in [id_contact_last, int(id_contact_last)]:
             continue
 
-        res_del = bx24.call(
-            'crm.contact.delete',
-            {'id': id_contact}
-        )
+        # res_del = bx24.call(
+        #     'crm.contact.delete',
+        #     {'id': id_contact}
+        # )
 
 
 # добавляет компании к контакту
-def add_companies_to_contact(companies, id_contact):
+def add_companies_to_contact(id_contact, companies):
+    print('companies = ', companies)
     if not companies:
         return True
 

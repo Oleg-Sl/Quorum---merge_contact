@@ -79,7 +79,7 @@ class Report:
                 </thead>
             ''')
 
-    def add(self, old_contacts, id_contact_res, data_update):
+    def add(self, old_contacts, id_contact_res, data_update, companies):
         with open(self.filename, 'a', encoding=self.encoding) as f:
             html = ''
             for _, contact in old_contacts.items():
@@ -92,21 +92,9 @@ class Report:
             res_contact = old_contacts.get(id_contact_res, {})
             html += f"""
                 <tr class="result">
-                    {self.get_row_res_html(res_contact, data_update)}
+                    {self.get_row_res_html(res_contact, data_update, companies)}
                 </tr>
             """
-            # html += f'<tr class="result">'
-            # html += f'<td>{res_contact.get("ID", "")}</td>\n'
-            # for field in self.fields:
-            #     if field == 'ID':
-            #         continue
-            #     elif field in data_update:
-            #         html += f'<td>{data_update.get(field, "")}</td>\n'
-            #     else:
-            #         html += f'<td>{res_contact.get(field, "")}</td>\n'
-
-            # html += f'</tr>'
-
             f.write(f'''
                 <tbody>
                     {html}
@@ -128,11 +116,13 @@ class Report:
                 html_row += f'<td>{contact.get(field, "") or "&ndash;"}</td>\n'
         return html_row
 
-    def get_row_res_html(self, contact, data_update):
+    def get_row_res_html(self, contact, data_update, companies):
         html_row = f'<td>{contact.get("ID", "")}</td>\n'
         for field, field_data in self.fields.items():
             if field == 'ID':
                 continue
+            elif field == 'COMPANY_ID' and not data_update.get(field, None) and companies:
+                html_row += f'<td>{companies[0]}</td>\n'
             elif field in data_update and field_data['type'] == 'crm_multifield':
                 cell = ''
                 for item in data_update.get(field, []):

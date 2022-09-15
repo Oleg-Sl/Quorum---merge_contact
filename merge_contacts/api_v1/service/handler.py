@@ -133,10 +133,10 @@ def del_companies_to_contact(ids_contacts, id_contact_last):
         if int(id_contact) in [id_contact_last, int(id_contact_last)]:
             continue
 
-        # res_del = bx24.call(
-        #     'crm.contact.delete',
-        #     {'id': id_contact}
-        # )
+        res_del = bx24.call(
+            'crm.contact.delete',
+            {'id': id_contact}
+        )
 
 
 # добавляет компании к контакту

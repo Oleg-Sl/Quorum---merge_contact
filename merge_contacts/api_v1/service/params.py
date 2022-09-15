@@ -3,7 +3,7 @@ BX24__COUNT_RECORDS_IN_METHODS = 50      # должно быть 50
 BX24__COUNT_METHODS_IN_BATH = 10
 
 # Количество параллельных потоков для обращения к Битрикс
-COUNT_THREAD = 1
+COUNT_THREAD = 3
 
 # способы поиска дубликатов
 DUPLICATES_FIELDS = {

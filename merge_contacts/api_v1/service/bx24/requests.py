@@ -7,8 +7,8 @@ from urllib.parse import unquote
 from mimetypes import guess_extension as extension
 from django.conf import settings
 
-from .bx24_tokens import (update_secrets_bx24, get_secrets_all_bx24, get_secret_bx24)
-from .variables import BX24__COUNT_METHODS_IN_BATH, BX24__COUNT_RECORDS_IN_METHODS, COUNT_THREAD
+from .tokens import (update_secrets_bx24, get_secrets_all_bx24, get_secret_bx24)
+from ..params import BX24__COUNT_METHODS_IN_BATH, BX24__COUNT_RECORDS_IN_METHODS, COUNT_THREAD
 # from variables import
 
 adapters.DEFAULT_RETRIES = 10

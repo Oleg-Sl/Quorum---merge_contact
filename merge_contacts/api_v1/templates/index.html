@@ -11,13 +11,17 @@
                 let domen = "{{domen}}";
                 let urlContactPing = `${domen}/merge_contacts_2/api/v1/status-merge-contacts/`;
                 let urlContactMerge = `${domen}/merge_contacts_2/api/v1/merge-contacts/`;
+                let urlReportFilename = `${domen}/merge_contacts_2/api/v1/report/`;
+                let urlReportDownload = `${domen}/merge_contacts_2/api/v1/report-download/`;
 
                 let btnMerge = document.querySelector("#btn-merge");
                 let progressContact = document.querySelector("#progress-contact .progress-bar");
                 let progressCompanies = document.querySelector("#progress-companies .progress-bar");
+                let progressContactCompany = document.querySelector("#progress-contact-company .progress-bar");
                 let progressDuplicates = document.querySelector("#progress-duplicates .progress-bar");
                 let countDuplicates = document.querySelector("#countDuplicates");
-
+                let methodMerge = document.querySelector("#methodMerge");
+                let reportList = document.querySelector("#reportList");
 
                 let timerId = setInterval(ping, 1000);
 
@@ -45,6 +49,11 @@
                             progressCompanies.style.width = `${percentCompanies}%`;
                             console.log("percentCompanies = ", percentCompanies);
                         }
+                        if (res.contact_company) {
+                            let percentContactCompany = getPercent(res.contact_company.start, res.contact_company.actual);
+                            progressContactCompany.style.width = `${percentContactCompany}%`;
+                            console.log("percentContactCompany = ", percentContactCompany);
+                        }
                         if (res.duplicates) {
                             countDuplicates.innerHTML = res.duplicates.start;
                             let percentDuplicates = getPercent(res.duplicates.start, res.duplicates.actual);
@@ -53,6 +62,7 @@
                         }
                     } else {
                         btnMerge.disabled = false;
+                        getFilenames();
                     }
                 }
 
@@ -66,7 +76,30 @@
                 function setZeroProgressbar() {
                     progressContact.style.width = `0%`;
                     progressCompanies.style.width = `0%`;
+                    progressContactCompany.style.width = `0%`;
                     progressDuplicates.style.width = `0%`;
+                }
+
+                function getMethodMerge() {
+                    return methodMerge.value;
+                }
+
+                async function getFilenames() {
+                    try {
+                        let response = await fetch(urlReportFilename);
+                        let result = await response.json();
+                        renderFilenames(result);
+                    } catch(err) {
+                        console.log(err);
+                    }
+                }
+
+                function renderFilenames(filenames) {
+                    html = '';
+                    for (filename of filenames) {
+                        html += `<a href="${urlReportDownload}?file=${filename}">${filename}</a> <br>`;
+                    }
+                    reportList.innerHTML = html;
                 }
 
                 btnMerge.addEventListener("click", async (e) => {
@@ -80,7 +113,7 @@
                                     'Content-Type': 'application/json'
                                 },
                                 body: JSON.stringify({
-                                    "method": "email_contact_name",
+                                    "method": getMethodMerge(),
                                  })
                             }
                         );
@@ -91,6 +124,8 @@
                         console.log('Результат нажатия кнопки "Объединить"', err);
                     }
                 })
+
+                getFilenames();
             }
         </script>
         <script src="//api.bitrix24.com/api/v1/"></script>
@@ -113,6 +148,12 @@
                         <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>
                     </div>
                 </div>
+                <div class="block-progress-contact-company">
+                    <label for="progress-contact-company" class="form-label">Получение связи контакт-компания:</label>
+                    <div class="progress" id="progress-contact-company">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>
+                    </div>
+                </div>
                 <div class="block-progress-duplicates">
                     <label for="progress-duplicates" class="form-label">Объединение дубликатов контактов (<span id="countDuplicates"></span>):</label>
                     <div class="progress" id="progress-duplicates">
@@ -123,7 +164,7 @@
             <br>
             <div class="row">
                 <div class="col-3">
-                    <select class="form-select" aria-label="Default select example">
+                    <select id="methodMerge" class="form-select" aria-label="Default select example">
                         <option value="email_contact_name" selected>Имя контакта + email</option>
                         <option value="email_company">Название компании + email</option>
                     </select>
@@ -131,6 +172,12 @@
                 <div class="col">
                     <button type="button" class="btn btn-primary" id="btn-merge">Объединить</button>
                 </div>
+            </div>
+
+            <br>
+            <strong>Отчеты: </strong>
+            <div id="reportList">
+
             </div>
 
         </div>

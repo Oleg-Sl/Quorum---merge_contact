@@ -1,7 +1,8 @@
-from threading import Thread, Lock
+from threading import Thread
 from django.shortcuts import render
+from django.http import FileResponse, Http404
 from django.views.decorators.clickjacking import xframe_options_exempt
-from rest_framework import views, viewsets, filters, status
+from rest_framework import views, status
 from rest_framework.response import Response
 import logging
 import os
@@ -9,8 +10,8 @@ import json
 from django.conf import settings
 
 
-from .service import handler, bx24_tokens, tasks
-
+from .service import handler, tasks
+from .service.bx24 import tokens
 
 # логгер входные данные событий от Битрикс
 logger = logging.getLogger('tasks_access')
@@ -123,10 +124,37 @@ class StatusMergeContactsViewSet(views.APIView):
                     "start": tasks.companies_queue.get_start_size(),
                     "actual": tasks.companies_queue.qsize()
                 }
+                res["contact_company"] = {
+                    "start": tasks.company_contact_queue.get_start_size(),
+                    "actual": tasks.company_contact_queue.qsize()
+                }
                 res["duplicates"] = {
                     "start": tasks.duplicates_queue.get_start_size(),
                     "actual": tasks.duplicates_queue.qsize()
                 }
 
         return Response(res, status=status.HTTP_200_OK)
+
+
+class ReportViewSet(views.APIView):
+    def get(self, request):
+        path = os.path.join(settings.BASE_DIR, 'reports')
+        return Response(os.listdir(path), status=status.HTTP_200_OK)
+
+
+class ReportDownloadViewSet(views.APIView):
+    def get(self, request):
+        f_name = request.query_params.get("file")
+        if not f_name:
+            return Response('Not found file', status=status.HTTP_404_NOT_FOUND)
+
+        path = os.path.join(settings.BASE_DIR, 'reports', f_name)
+
+        try:
+            response = FileResponse(open(path, 'rb'))
+            response['content_type'] = "application/octet-stream"
+            response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(path)
+            return response
+        except Exception:
+            raise Http404
 

@@ -39,11 +39,24 @@ class QueueCommands(MyQueue):
     def forming(self, fields=[]):
         total = self.bx24.get_count_records(self.method)
         commands = self.bx24.forming_long_batch_commands(self.method, total, fields)
-        # pprint(commands)
         cmd_list = self.bx24.split_long_batch_commands(commands)
-        # pprint(cmd_list)
         self.set_start_size(len(cmd_list))
         [self.send_queue(cmd) for cmd in cmd_list]
         self.send_queue_stop()
 
+
+class QueueByModels(MyQueue):
+    def __init__(self, bx24, count_treads):
+        self.bx24 = bx24
+        super().__init__(count_treads)
+
+    def forming(self, model_name):
+        ids = model_name.objects.values_list('ID', flat=True)
+        commands = {}
+        for i in ids:
+            commands[i] = f'crm.company.contact.items.get?id={i}'
+        cmd_list = self.bx24.split_long_batch_commands(commands)
+        self.set_start_size(len(cmd_list))
+        [self.send_queue(cmd) for cmd in cmd_list]
+        self.send_queue_stop()
 

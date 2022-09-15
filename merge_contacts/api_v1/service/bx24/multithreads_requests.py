@@ -1,8 +1,11 @@
 from threading import Thread, Lock
+from pprint import pprint
 
 
-from . import handler
-from .search_duplicate import get_id_duplicate_by_str
+from ..params import BX24__COUNT_RECORDS_IN_METHODS
+from .. import handler
+from ..duplicates.search import get_id_duplicate_by_str
+
 
 lock = Lock()
 
@@ -52,8 +55,7 @@ class ArrayThreadsGetContacts(ArrayThreads):
 
 
 class ArrayThreadsBatchGetCompanies(ArrayThreads):
-    def __init__(self, input_queue, bx24, count_threads, company_contact_queue):
-        self.company_contact_queue = company_contact_queue
+    def __init__(self, input_queue, bx24, count_threads):
         super().__init__(input_queue, bx24, count_threads)
 
     def handler(self):
@@ -67,7 +69,7 @@ class ArrayThreadsBatchGetCompanies(ArrayThreads):
                 continue
 
             # сохранение полученных компаний в БД
-            handler.companies_create(response['result']['result'], lock, self.company_contact_queue)
+            handler.companies_create(response['result']['result'], lock)
 
             self.input_queue.task_done()
 
@@ -78,24 +80,25 @@ class ArrayThreadsBatchGetCompanyBindContact(ArrayThreads):
 
     def handler(self):
         while True:
-            id_company = self.input_queue.pop()
-            if id_company is None:
+            item = self.input_queue.pop()
+            if item is None:
                 break
 
-            response = self.bx24.call('crm.company.contact.items.get', {'id': id_company})
+            response = self.bx24.batch(item)
 
-            if 'result' not in response:
+            if 'result' not in response or 'result' not in response['result']:
                 continue
 
             # сохранение связи компания-контакт в БД
-            handler.company_bind_contact(id_company, response['result'], lock)
+            handler.company_bind_contact(response['result']['result'], lock)
 
             self.input_queue.task_done()
 
 
 class ArrayThreadsMergeContact(ArrayThreads):
-    def __init__(self, input_queue, bx24, count_threads, method_merge):
+    def __init__(self, input_queue, bx24, count_threads, method_merge, report):
         self.method_merge = method_merge
+        self.report = report
         super().__init__(input_queue, bx24, count_threads)
 
     def handler(self):
@@ -108,7 +111,7 @@ class ArrayThreadsMergeContact(ArrayThreads):
             ids = get_id_duplicate_by_str(contact_value, self.method_merge)
             lock.release()
 
-            handler.merge_contacts(ids, lock)
+            handler.merge_contacts(ids, lock, self.report)
 
             self.input_queue.task_done()
 

@@ -21,7 +21,7 @@
                 let progressDuplicates = document.querySelector("#progress-duplicates .progress-bar");
                 let countDuplicates = document.querySelector("#countDuplicates");
                 let methodMerge = document.querySelector("#methodMerge");
-                let reportList = document.querySelector("#reportList");
+                let reportList = document.querySelector("#reportList tbody");
 
                 let timerId = setInterval(ping, 1000);
 
@@ -97,7 +97,12 @@
                 function renderFilenames(filenames) {
                     html = '';
                     for (filename of filenames) {
-                        html += `<a href="${urlReportDownload}?file=${filename}">${filename}</a> <br>`;
+                        html += `
+                        <tr data-filename="${filename}">
+                            <td><a href="${urlReportDownload}?file=${filename}">${filename}</a> <br></td>
+                            <td class="remove" title="Удалить файл" data-filename="${filename}"><button type="button" class="btn-close" aria-label="Close"></button></td>
+                        </tr>
+                        `;
                     }
                     reportList.innerHTML = html;
                 }
@@ -124,6 +129,24 @@
                         console.log('Результат нажатия кнопки "Объединить"', err);
                     }
                 })
+
+                reportList.addEventListener('click', async (e)=> {
+                    if (e.target.tagName == 'BUTTON') {
+                        let tr = e.target.closest('tr');
+                        let filename = tr.dataset.filename;
+                        deleteFile(filename);
+                    }
+                });
+
+                async function deleteFile(filename) {
+                    try {
+                        let url = urlReportDownload + `?file=${filename}`;
+                        console.log("url = ", url);
+                        let response = await fetch(url, {method: 'DELETE'});
+                    } catch(err) {
+                        console.log(err);
+                    }
+                }
 
                 getFilenames();
             }
@@ -176,9 +199,12 @@
             <br>
             <strong>Отчеты: </strong>
             <div id="reportList">
+                <table class>
+                    <tbody>
 
+                    </tbody>
+                </table>
             </div>
-
         </div>
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-u1OknCvxWvY5kfmNBILK2hRnQC3Pr17a+RTT6rIHI7NnikvbZlHgTPOOmMi466C8" crossorigin="anonymous"></script>

@@ -158,3 +158,21 @@ class ReportDownloadViewSet(views.APIView):
         except Exception:
             raise Http404
 
+    def delete(self, request, *args, **kwargs):
+        f_name = request.query_params.get("file")
+        if not f_name:
+            return Response('Not found file', status=status.HTTP_404_NOT_FOUND)
+
+        path = os.path.join(settings.BASE_DIR, 'reports', f_name)
+        if os.path.exists(path):
+            os.remove(path)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        return Response('Not found file', status=status.HTTP_404_NOT_FOUND)
+
+    # def delete(self, request, pk, format=None):
+    #     event = self.get_object(pk)
+    #     event.delete()
+    #     return Response(status=status.HTTP_204_NO_CONTENT)
+
+
